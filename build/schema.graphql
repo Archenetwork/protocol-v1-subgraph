@@ -17,7 +17,7 @@ type ExampleEntity @entity {
   user: Bytes! # address
 }
 
-type Create @entity {
+type ECreate @entity {
   id: ID!
   swap: String!
   user: String!
@@ -27,33 +27,33 @@ type Create @entity {
   sys_reward: BigInt!
 }
 
-# type Entanglement @entity {
+# type EEntanglement @entity {
 #   id: ID!
 # }
 
-# type Initialize @entity {
+# type EInitialize @entity {
 #   id: ID!
 # }
 
-# type ClaimForHead @entity {
+# type EClaim_For_Head @entity {
 #   id: ID!
 # }
 
-# type ClaimForTail @entity {
+# type EClaimForTail @entity {
 #   id: ID!
 # }
 
-# type DepositForHead @entity {
+# type EDepositForHead @entity {
 #   id: ID!
 # }
 
-# type DepositForTail @entity {
+# type EDepositForTail @entity {
 #   id: ID!
 # }
 
-# type WithdrawHead @entity {
+# type EWithdrawHead @entity {
 #   id: ID!
 # }
-# type WithdrawTail @entity {
+# type EWithdrawTail @entity {
 #   id: ID!
 # }

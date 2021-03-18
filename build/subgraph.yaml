@@ -1,6 +1,6 @@
 specVersion: 0.0.2
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: Contract
@@ -8,7 +8,6 @@ dataSources:
     source:
       address: "0x738883D4cD20bF8F66653858079d445333a1e980"
       abi: Contract
-      startBlock: 111111
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -26,7 +25,7 @@ dataSources:
         - OwnershipTransferred
       abis:
         - name: Contract
-          file: ./abis/Contract.json
+          file: Contract/abis/Contract.json
       eventHandlers:
         - event: E_Claim_For_Head(address,address,address)
           handler: handleE_Claim_For_Head
@@ -48,4 +47,4 @@ dataSources:
           handler: handleE_Withdraw_Tail
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
-      file: ./src/mapping.ts
+      file: Contract/Contract.wasm
