@@ -18,9 +18,9 @@ dataSources:
 # fantom
 # bsc
     source:
-      address: "0xCda332653aF042ebE9183C62cFfcDef3B1641D51"
+      address: "0xceF7d74783A38d3917B7D74cF037acC1EA9E336B"
       abi: Contract
-      startBlock: 9810701
+      startBlock: 9894204
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
