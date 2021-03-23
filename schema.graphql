@@ -10,21 +10,86 @@
 # event E_Withdraw_Head(address swap ,address user ,uint256 status);
 # event E_Withdraw_Tail(address swap ,address user ,uint256 status);
   
-type ExampleEntity @entity {
+type Order @entity {
   id: ID!
-  count: BigInt!
-  swap: Bytes! # address
-  user: Bytes! # address
-}
-
-type Create @entity {
-  id: ID!
-  swap: String!
-  user: String!
-  swap_owner: String!
-  token_head: String!
-  token_tail: String!
-  sys_reward: BigInt!
+  "订单编号"
+  orderNum: Bytes
+  "订单状态 0 等待初始化 1 初始化 2 等待买家  3 等待卖家 4 买卖家都确定 5 买方领取 6 卖方领取 7 交割完成"
+  orderStatus: Int
+  "交割价格"
+  deliveryPrice: String
+  "买方交割数量"
+  buyerDeliveryQuantity: BigInt
+  "卖方交割数量"
+  sellerDeliveryQuantity: BigInt
+  "订单生效时间"
+  orderTakeEffectTime: String
+  "订单交割时间"
+  orderDeliveryTime: String
+  "距离合约生效区块高度数量"
+  effectiveHeight: BigInt
+  "距离交割区块高度数量"
+  deliveryHeight: BigInt
+  "买方保证金"
+  buyerEarnestMoney: BigInt
+  "卖方保证金"
+  sellerEarnestMoney: BigInt
+  "买家已付"
+  buyerPaid: BigInt
+  "卖家已付"
+  sellerPaid: BigInt
+  "买家地址"
+  buyerAddr: Bytes
+  "卖家地址"
+  sellerAddr: Bytes
+  "买家权益代币地址"
+  buyerTokenAddr: Bytes
+  "卖家权益代币地址"
+  sellerTokenAddr: Bytes
+  "买家权益代币总数量（权益凭证"
+  buyerTokenTotalQuantity: BigInt
+  "卖家权益代币总数量（权益凭证"
+  sellerTokenTotalQuantity: BigInt
+  "合约创建人地址"
+  contractCreatorAddr: Bytes
+  "合约创建时间"
+  contractCreateTime: String
+  "成单赏金"
+  moneyReward: BigInt
+  "买家已补足"
+  buyerMakeUp: BigInt
+  "卖家已补足"
+  sellerMakeUp: BigInt
+  "更新时间"
+  updateTime: String
+  "创建时间"
+  createTime: String
+  "合约创建区块高度"
+  contractCreateBlockNumber: BigInt
+  "合约初始化时间"
+  contractInitializeTime: String
+  "合约初始化区块高度"
+  contractInitializeBlockNumber: BigInt
+  "买家标的物地址"
+  buyerSubjectMatterAddr: Bytes
+  "卖家标的物地址"
+  sellerSubjectMatterAddr: Bytes
+  "保证金状态 0 双方未支付 1 买方支付 2 卖方支付 3 双方支付"
+  earnestMoneyStatus: Int
+  "补足代币状态 0 双方未补 1 买方补足 2 卖方补足 3 双方补足"
+  depositStatus: Int
+  "买家领取状态 1 未成对 2 已履行完成合约 3 自己履行而对手未履行 4 自己未履行"
+  buyerWithdrawStatus: Int
+  "卖家领取状态 1 未成对 2 已履行完成合约 3 自己履行而对手未履行 4 自己未履行"
+  sellerWithdrawStatus: Int
+  "订单约定状态 0 正常 1 保险金违约 2 代币违约"
+  contractStatus: Int
+  "买方邀请人"
+  buyerReferer: Bytes
+  "卖方邀请人"
+  sellerReferer: Bytes
+  "推荐订单状态 0 初始 1 待交割 2 已交割"
+  recommendOrderStatus: Int
 }
 
 # type Entanglement @entity {
