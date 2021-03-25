@@ -92,6 +92,36 @@ type Order @entity {
   recommendOrderStatus: Int
 }
 
+
+type Message @entity {
+  id: ID!
+  "消息内容"
+  messageContext: String
+  "消息类型id"
+  messageTypeId: Int
+  "消息类型名称"
+  messageTypeName: String
+  "用户地址"
+  userAddr: Bytes
+  "关联订单编号"
+  orderNum: Bytes
+}
+
+type RecommendOrder @entity {
+  id: ID!
+  "卖方代币"
+  sellerToken: Bytes
+  "买方代币地址"
+  buyerTokenAddr: Bytes
+  "卖方代币名称"
+  sellerTokenAddr: Bytes
+  "等待交割数量"
+  waitDeliveryNum: Int
+  "等待生效数量"
+  waitEffectNum: Int
+  "总数量"
+  totalNum: Int
+}
 # type Entanglement @entity {
 #   id: ID!
 # }
