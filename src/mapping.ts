@@ -1,4 +1,4 @@
-import { log, BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { log, BigInt, Bytes, BigDecimal } from "@graphprotocol/graph-ts"
 import {
   Contract,
   E_Claim_For_Head,
@@ -12,10 +12,10 @@ import {
   E_Withdraw_Tail,
   OwnershipTransferred
 } from "../generated/Contract/Contract"
-import { Order, Message } from "../generated/schema"
+import { Order, Message, RecommendOrder } from "../generated/schema"
 import * as help from './help'
 import * as message from './message'
-import * as tools from './tools'
+// import * as tools from './tools'
 /**
   event E_Create(address swap ,address user,address swap_owner ,address token_head,address token_tail,uint256 sys_reward);
   event E_Entanglement(address swap ,address user ,address op_token_head,address op_token_tail);
@@ -32,11 +32,69 @@ import * as tools from './tools'
 // address swap ,address user,address referer
 // 支付保证金（正面） 参数为 交易对合约地址，操作用户 ，邀请人
 export function handleE_Claim_For_Head(event: E_Claim_For_Head): void {
+  log.info("seller claim orderNum:{}", [event.params.swap.toHex()])
+  let order = new Order(event.params.swap.toHex())
+  if (order != null) { 
+    order.sellerAddr = event.params.user
+    order.sellerReferer = event.params.referer
+    order.sellerMakeUp = order.sellerEarnestMoney
+    if (order.earnestMoneyStatus == help.EarnestMoneyStatus.BUYER_PAY) {
+      order.earnestMoneyStatus = help.EarnestMoneyStatus.ALL_PAY
+    } else {
+      order.earnestMoneyStatus = help.EarnestMoneyStatus.SELLER_PAY
+    }
+    if (order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000") {
+      order.orderStatus = help.OrderStatus.WAIT_BUYER
+    } else {
+      order.orderStatus = help.OrderStatus.BUYER_SELLER
+    }
+    order.sellerPaid = order.sellerEarnestMoney
+    order.save()
+    // createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.buyerEarnestMoney(order.orderNum.toHex(), order.sellerEarnestMoney.toString()));
+    // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.EARNEST_MONEY.toString(), message.creatorBuyerEarnestMoney(order.sellerAddr.toHex(), order.orderNum.toHex(), order.sellerEarnestMoney.toString()));
+    if (order.earnestMoneyStatus == help.EarnestMoneyStatus.ALL_PAY) {
+      // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.EARNEST_MONEY.toString(), message.allPayEarnestMoney(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.buyerAddr, help.MessageType.EARNEST_MONEY.toString(), message.allPayEarnestMoney(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.allPayEarnestMoney(order.orderNum.toHex()));
+    } else {
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.waitBuyerPayEarnestMoney(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.EARNEST_MONEY.toString(), message.waitBuyerPayEarnestMoney(order.orderNum.toHex()));
+    }
+  }
 }
 
 // address swap ,address user,address referer
 // 支付保证金（反面） 参数为 交易对合约地址，操作用户 ，邀请人
 export function handleE_Claim_For_Tail(event: E_Claim_For_Tail): void {
+  log.info("buyer claim orderNum:{}", [event.params.swap.toHex()])
+  let order = new Order(event.params.swap.toHex())
+  if (order != null) { 
+    order.buyerAddr = event.params.user
+    order.buyerReferer = event.params.referer
+    order.buyerMakeUp = order.buyerEarnestMoney
+    if (order.earnestMoneyStatus == help.EarnestMoneyStatus.SELLER_PAY) {
+      order.earnestMoneyStatus = help.EarnestMoneyStatus.ALL_PAY
+    } else {
+      order.earnestMoneyStatus = help.EarnestMoneyStatus.BUYER_PAY
+    }
+    if (order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000") {
+      order.orderStatus = help.OrderStatus.WAIT_SELLER
+    } else {
+      order.orderStatus = help.OrderStatus.BUYER_SELLER
+    }
+    order.buyerPaid = order.buyerEarnestMoney
+    order.save()
+    // createMessage(order.orderNum, order.buyerAddr, help.MessageType.EARNEST_MONEY.toString(), message.buyerEarnestMoney(order.orderNum.toHex(), order.buyerEarnestMoney.toString()));
+    // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.EARNEST_MONEY.toString(), message.creatorBuyerEarnestMoney(order.buyerAddr.toHex(), order.orderNum.toHex(), order.buyerEarnestMoney.toString()));
+    if (order.earnestMoneyStatus == help.EarnestMoneyStatus.ALL_PAY) {
+      // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.EARNEST_MONEY.toString(), message.allPayEarnestMoney(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.buyerAddr, help.MessageType.EARNEST_MONEY.toString(), message.allPayEarnestMoney(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.allPayEarnestMoney(order.orderNum.toHex()));
+    } else {
+      // createMessage(order.orderNum, order.buyerAddr, help.MessageType.EARNEST_MONEY.toString(), message.waitSellerPayEarnestMoney(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.EARNEST_MONEY.toString(), message.waitSellerPayEarnestMoney(order.orderNum.toHex()));
+    }
+  }
 }
 
 
@@ -69,17 +127,45 @@ export function handleE_Create(event: E_Create): void {
 
 // // 支付代币（正面） 参数为 交易对合约地址，操作用户，本次抵押数量，总抵押数量
 export function handleE_Deposit_For_Head(event: E_Deposit_For_Head): void {
-
+  log.info("DepositForHead orderNum:{}", [event.params.swap.toHex()])
+  let order = Order.load(event.params.swap.toHex())
+  
 }
 
+// address swap ,address user, uint256 amount,uint256 deposited_amount
 // // 支付代币（反面） 参数为 交易对合约地址，操作用户，本次抵押数量，总抵押数量
 export function handleE_Deposit_For_Tail(event: E_Deposit_For_Tail): void {
-
+  log.info("DepositForTail orderNum:{}", [event.params.swap.toHex()])
+  let order = Order.load(event.params.swap.toHex())
+  if (order != null) {
+    order.buyerMakeUp = event.params.deposited_amount
+    if (event.params.deposited_amount == order.buyerDeliveryQuantity) {
+      order.depositStatus = help.DepositStatus.BUYER_MAKE_UP
+      // createMessage(order.orderNum, order.buyerAddr, help.MessageType.DELIVERY.toString(), message.makeUpToken(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.DELIVERY.toString(), message.buyerMakeUpTokenToCreator(order.buyerAddr.toHex(), order.orderNum.toHex()));
+      if (order.sellerMakeUp == order.sellerDeliveryQuantity) {
+        // createMessage(order.orderNum, order.buyerAddr, help.MessageType.DELIVERY.toString(), message.allMakeUpToken(order.orderNum.toHex()));
+        // createMessage(order.orderNum, order.sellerAddr, help.MessageType.DELIVERY.toString(), message.allMakeUpToken(order.orderNum.toHex()));
+        // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.DELIVERY.toString(), message.allMakeUpToken(order.orderNum.toHex()));
+      }
+    } else {
+      // new BigDecimal()
+    }
+    order.save()
+  }
 }
 
+// address swap ,address user ,address op_token_head,address op_token_tail
 // // 合约双方保证金全部完成 参数为 交易对合约地址，操作用户 ,权益代币地址（正面）权益代币地址（反面）
 export function handleE_Entanglement(event: E_Entanglement): void {
-
+  log.info("Entanglement orderNum:{}", [event.params.swap.toHex()])
+  let order = Order.load(event.params.swap.toHex())
+  if (order != null) {
+    order.buyerTokenAddr = event.params.op_token_tail
+    order.sellerTokenAddr = event.params.op_token_head
+    order.earnestMoneyStatus = help.EarnestMoneyStatus.ALL_PAY
+    order.save()
+  }
 }
 
 
@@ -100,27 +186,27 @@ export function handleE_Initialize(event: E_Initialize): void {
     order.effectiveHeight = event.params.pair_dlo
     order.deliveryHeight = event.params.option_dlo
     order.contractInitializeBlockNumber = event.block.number
-    order.orderTakeEffectTime = tools.formatDateTimeTS(order.effectiveHeight.toI32() * help.BLOCK_NUMBER_TIME + "",tools.DT_FMT.default);
-    order.orderDeliveryTime = tools.formatDateTimeTS(order.deliveryHeight.toI32() * help.BLOCK_NUMBER_TIME + "",tools.DT_FMT.default);
+    // order.orderTakeEffectTime = tools.formatDateTimeTS(order.effectiveHeight.toI32() * help.BLOCK_NUMBER_TIME + "",tools.DT_FMT.default);
+    // order.orderDeliveryTime = tools.formatDateTimeTS(order.deliveryHeight.toI32() * help.BLOCK_NUMBER_TIME + "",tools.DT_FMT.default);
     if (order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000" && order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000") {
       order.orderStatus = help.OrderStatus.INITIALIZE
     } else if (order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000" && !(order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000")) {
       order.orderStatus = help.OrderStatus.WAIT_BUYER
-      createMessage(order.orderNum, order.sellerAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
-      createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
     } else if (!(order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000") && order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000") {
       order.orderStatus = help.OrderStatus.WAIT_SELLER
-      createMessage(order.orderNum, order.buyerAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
-      createMessage(order.orderNum, order.buyerAddr, help.MessageType.EARNEST_MONEY.toString(), message.buyerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
+      // createMessage(order.orderNum, order.buyerAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.buyerAddr, help.MessageType.EARNEST_MONEY.toString(), message.buyerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
     } else if (!(order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000") && !(order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000")) {
       order.orderStatus = help.OrderStatus.BUYER_SELLER
-      createMessage(order.orderNum, order.sellerAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
-      createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
-      createMessage(order.orderNum, order.sellerAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
-      createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
+      // createMessage(order.orderNum, order.sellerAddr, help.MessageType.EARNEST_MONEY.toString(), message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
     }
     order.earnestMoneyStatus = help.EarnestMoneyStatus.NOT_PAY
-    createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
+    // createMessage(order.orderNum, order.contractCreatorAddr, help.MessageType.CREATE_ORDER.toString(), message.createOrderMessage(order.orderNum.toHex()));
     order.save()
   }
 }
@@ -131,23 +217,19 @@ export function handleE_Withdraw_Head(event: E_Withdraw_Head): void {
 
 // // 领取应得代币（反面） 参数为 交易对合约地址，操作用户 ，状态 1：未成对。2：已履行完成合约。3：自己履行而对手未履行。4 自己未履行）
 export function handleE_Withdraw_Tail(event: E_Withdraw_Tail): void {
+
 }
 
 export function handleOwnershipTransferred(event: OwnershipTransferred): void {
 }
 
 
-function createMessage(orderNum: Bytes, userAddr: Bytes, messageTypeName: string, messageContext: string) {
-  let data = new Date()
-  let message = new Message(data.getTime() + orderNum.toHex())
-  message.orderNum = orderNum
-  message.userAddr = userAddr
-  message.messageTypeName = messageTypeName
-  message.messageContext = messageContext
-  message.save()
-}
-
-function listenerRecommendOrderAdd(msg: string) {
-  
-
-}
+// export function // createMessage(orderNum: Bytes, userAddr: Bytes, messageTypeName: string, messageContext: string) {
+//   let data = new Date()
+//   let message = new Message(data.getTime() + orderNum.toHex())
+//   message.orderNum = orderNum
+//   message.userAddr = userAddr
+//   message.messageTypeName = messageTypeName
+//   message.messageContext = messageContext
+//   message.save()
+// }

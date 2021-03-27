@@ -50,3 +50,14 @@ export enum EarnestMoneyStatus {
     // SELLER_PAY(2, "卖方支付"),
     // ALL_PAY(3, "双方支付");
 }
+
+export enum DepositStatus {
+    NOT_MAKE_UP = 0,
+    BUYER_MAKE_UP,
+    SELLER_MAKE_UP,
+    ALL_MAKE_UP
+    //  NOT_MAKE_UP(0, "双方未补"),
+    //  BUYER_MAKE_UP(1, "买方补足"),
+    //  SELLER_MAKE_UP(2, "卖方补足"),
+    //  ALL_MAKE_UP(3, "双方补足");
+ }

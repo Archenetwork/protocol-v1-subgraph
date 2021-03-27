@@ -92,7 +92,6 @@ type Order @entity {
   recommendOrderStatus: Int
 }
 
-
 type Message @entity {
   id: ID!
   "消息内容"
