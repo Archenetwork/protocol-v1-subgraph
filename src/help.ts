@@ -40,6 +40,7 @@ export enum MessageType {
     // TRANSACTION(5, "违约消息"),
     // RECEIVER(6, "收款消息");
 }
+
 export enum EarnestMoneyStatus {
     NOT_PAY = 0,
     BUYER_PAY,
@@ -60,4 +61,19 @@ export enum DepositStatus {
     //  BUYER_MAKE_UP(1, "买方补足"),
     //  SELLER_MAKE_UP(2, "卖方补足"),
     //  ALL_MAKE_UP(3, "双方补足");
- }
+}
+
+export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
+    let bd = BigDecimal.fromString('1')
+    for (let i = ZERO_BI; i.lt(decimals as BigInt); i = i.plus(ONE_BI)) {
+      bd = bd.times(BigDecimal.fromString('10'))
+    }
+    return bd
+}
+
+export function convertTokenToDecimal(tokenAmount: BigInt, exchangeDecimals: BigInt): BigDecimal {
+    if (exchangeDecimals == ZERO_BI) {
+      return tokenAmount.toBigDecimal()
+    }
+    return tokenAmount.toBigDecimal().div(exponentToBigDecimal(exchangeDecimals))
+}

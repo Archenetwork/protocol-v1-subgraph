@@ -1,43 +1,43 @@
 
 
-# event E_Create(address swap ,address user,address swap_owner ,address token_head,address token_tail,uint256 sys_reward);
+# event E_Create(address swap ,address user,address swap_owner ,address token_head,address token_tail,uBigInt256 sys_reward);
 # event E_Entanglement(address swap ,address user ,address op_token_head,address op_token_tail);
-# event E_Initialize(address swap ,address user,uint256 total_amount_head ,uint256 total_amount_tail ,uint256 limit_head ,uint256 limit_tail ,address rival_head,address rival_tail , uint256 pair_dlo ,uint256 option_dlo);
+# event E_Initialize(address swap ,address user,uBigInt256 total_amount_head ,uBigInt256 total_amount_tail ,uBigInt256 limit_head ,uBigInt256 limit_tail ,address rival_head,address rival_tail , uBigInt256 pair_dlo ,uBigInt256 option_dlo);
 # event E_Claim_For_Head(address swap ,address user,address referer);
 # event E_Claim_For_Tail(address swap ,address user,address referer);
-# event E_Deposit_For_Head(address swap ,address user, uint256 amount,uint256 deposited_amount);
-# event E_Deposit_For_Tail(address swap ,address user, uint256 amount,uint256 deposited_amount);
-# event E_Withdraw_Head(address swap ,address user ,uint256 status);
-# event E_Withdraw_Tail(address swap ,address user ,uint256 status);
+# event E_Deposit_For_Head(address swap ,address user, uBigInt256 amount,uBigInt256 deposited_amount);
+# event E_Deposit_For_Tail(address swap ,address user, uBigInt256 amount,uBigInt256 deposited_amount);
+# event E_Withdraw_Head(address swap ,address user ,uBigInt256 status);
+# event E_Withdraw_Tail(address swap ,address user ,uBigInt256 status);
   
 type Order @entity {
   id: ID!
   "订单编号"
   orderNum: Bytes
   "订单状态 0 等待初始化 1 初始化 2 等待买家  3 等待卖家 4 买卖家都确定 5 买方领取 6 卖方领取 7 交割完成"
-  orderStatus: Int
-  "交割价格"
-  deliveryPrice: String
+  orderStatus: BigInt
   "买方交割数量"
-  buyerDeliveryQuantity: BigInt
+  buyerDeliveryQuantity: BigDecimal
   "卖方交割数量"
-  sellerDeliveryQuantity: BigInt
+  sellerDeliveryQuantity: BigDecimal
   "订单生效时间"
   orderTakeEffectTime: String
   "订单交割时间"
   orderDeliveryTime: String
   "距离合约生效区块高度数量"
   effectiveHeight: BigInt
+  effective: BigInt
   "距离交割区块高度数量"
   deliveryHeight: BigInt
+  delivery: BigInt
   "买方保证金"
-  buyerEarnestMoney: BigInt
+  buyerEarnestMoney: BigDecimal
   "卖方保证金"
-  sellerEarnestMoney: BigInt
+  sellerEarnestMoney: BigDecimal
   "买家已付"
-  buyerPaid: BigInt
+  buyerPaid: BigDecimal
   "卖家已付"
-  sellerPaid: BigInt
+  sellerPaid: BigDecimal
   "买家地址"
   buyerAddr: Bytes
   "卖家地址"
@@ -47,19 +47,19 @@ type Order @entity {
   "卖家权益代币地址"
   sellerTokenAddr: Bytes
   "买家权益代币总数量（权益凭证"
-  buyerTokenTotalQuantity: BigInt
+  buyerTokenTotalQuantity: BigDecimal
   "卖家权益代币总数量（权益凭证"
-  sellerTokenTotalQuantity: BigInt
+  sellerTokenTotalQuantity: BigDecimal
   "合约创建人地址"
   contractCreatorAddr: Bytes
   "合约创建时间"
   contractCreateTime: String
   "成单赏金"
-  moneyReward: BigInt
+  moneyReward: BigDecimal
   "买家已补足"
-  buyerMakeUp: BigInt
+  buyerMakeUp: BigDecimal
   "卖家已补足"
-  sellerMakeUp: BigInt
+  sellerMakeUp: BigDecimal
   "更新时间"
   updateTime: String
   "创建时间"
@@ -75,21 +75,22 @@ type Order @entity {
   "卖家标的物地址"
   sellerSubjectMatterAddr: Bytes
   "保证金状态 0 双方未支付 1 买方支付 2 卖方支付 3 双方支付"
-  earnestMoneyStatus: Int
+  earnestMoneyStatus: BigInt
   "补足代币状态 0 双方未补 1 买方补足 2 卖方补足 3 双方补足"
-  depositStatus: Int
+  depositStatus: BigInt
   "买家领取状态 1 未成对 2 已履行完成合约 3 自己履行而对手未履行 4 自己未履行"
-  buyerWithdrawStatus: Int
+  buyerWithdrawStatus: BigInt
   "卖家领取状态 1 未成对 2 已履行完成合约 3 自己履行而对手未履行 4 自己未履行"
-  sellerWithdrawStatus: Int
+  sellerWithdrawStatus: BigInt
   "订单约定状态 0 正常 1 保险金违约 2 代币违约"
-  contractStatus: Int
+  contractStatus: BigInt
   "买方邀请人"
   buyerReferer: Bytes
   "卖方邀请人"
   sellerReferer: Bytes
   "推荐订单状态 0 初始 1 待交割 2 已交割"
-  recommendOrderStatus: Int
+  recommendOrderStatus: BigInt
+  chainType: BigInt
 }
 
 type Message @entity {
@@ -97,7 +98,7 @@ type Message @entity {
   "消息内容"
   messageContext: String
   "消息类型id"
-  messageTypeId: Int
+  messageTypeId: BigInt
   "消息类型名称"
   messageTypeName: String
   "用户地址"
@@ -115,11 +116,11 @@ type RecommendOrder @entity {
   "卖方代币名称"
   sellerTokenAddr: Bytes
   "等待交割数量"
-  waitDeliveryNum: Int
+  waitDeliveryNum: BigInt
   "等待生效数量"
-  waitEffectNum: Int
+  waitEffectNum: BigInt
   "总数量"
-  totalNum: Int
+  totalNum: BigInt
 }
 # type Entanglement @entity {
 #   id: ID!

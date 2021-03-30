@@ -1,8 +1,8 @@
-import { log, BigInt, BigDecimal, Address} from '@graphprotocol/graph-ts'
+import { log, BigInt,  BigDecimal, Address} from '@graphprotocol/graph-ts'
 
-export function getPrice(param: string): String {
-    let price = new BigDecimal(BigInt.fromI32(param))
-    let bigDecimal = new BigDecimal(BigInt.fromI32(1000000000000000000))
+export function getPrice(param: string): string {
+    let price = BigDecimal.fromString(param)
+    let bigDecimal = BigDecimal.fromString("1000000000000000000")
     price = price.div(bigDecimal).truncate(2)
     return price.toString();
 }
