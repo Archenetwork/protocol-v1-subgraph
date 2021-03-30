@@ -1,6 +1,3 @@
-
-// // import { toNumberS } from "../../module/utils/tools";
-
 // export const DT_FMT = {
 //     default: "${YY}-${MM}-${DD} ${H}:${M}:${S}"      ,        // 2020-03-02 11:40:06
 //     date_h : "${YY}-${MM}-${DD} ${H}"                ,        // 2020-03-02 11
