@@ -12,7 +12,7 @@ import {
   E_Withdraw_Tail,
   OwnershipTransferred
 } from "../generated/Contract/Contract"
-import { Order, Message, RecommendOrder } from "../generated/schema"
+import { Order, Message, RecommendOrder, LockAll, LockCurr } from "../generated/schema"
 // import { JSON } from "../node_modules/typescript/lib/lib.es2015.symbol.wellknown.d.ts"
 import * as help from './help'
 import * as message from './message'
@@ -36,7 +36,7 @@ export function handleE_Create(event: E_Create): void {
   // let entity = Create.load(event.transaction.hash.toHex() + "-" + event.logIndex.toString())
   let order = new Order(event.params.swap.toHex())
   order.orderNum = event.params.swap
-  order.contractCreateTime = event.block.timestamp.toString()
+  order.contractCreateTime = event.block.timestamp
   order.contractCreatorAddr = event.params.user
   order.buyerSubjectMatterAddr = event.params.token_tail
   order.sellerSubjectMatterAddr = event.params.token_head
@@ -47,9 +47,12 @@ export function handleE_Create(event: E_Create): void {
   order.sellerPaid = help.ZERO_BD
   order.buyerMakeUp = help.ZERO_BD
   order.sellerMakeUp = help.ZERO_BD
+  order.buyerEarnestMoney = help.ZERO_BD
+  order.sellerEarnestMoney = help.ZERO_BD
+  order.buyerDeliveryQuantity = help.ZERO_BD
+  order.sellerDeliveryQuantity = help.ZERO_BD
   order.contractStatus = help.ZERO_BI
   order.depositStatus = help.ZERO_BI
-  order.recommendOrderStatus = help.ZERO_BI
   order.chainType = BigInt.fromI32(3)
   order.save()
 }
@@ -61,7 +64,7 @@ export function handleE_Initialize(event: E_Initialize): void {
   let order = Order.load(event.params.swap.toHex())
   if (order != null) {
     log.warning("order not null initialize orderNum:{}", [order.orderNum.toHex()])
-    order.contractInitializeTime = event.block.timestamp.toString()
+    order.contractInitializeTime = event.block.timestamp
     order.buyerDeliveryQuantity = event.params.total_amount_tail.toBigDecimal()
     order.sellerDeliveryQuantity = event.params.total_amount_head.toBigDecimal()
     log.warning("order not null initialize orderNum:{} buyer:{}", [order.orderNum.toHex(), event.params.total_amount_head.toString()])
@@ -74,28 +77,29 @@ export function handleE_Initialize(event: E_Initialize): void {
     order.effective = event.params.pair_dlo.plus(event.block.number)
     order.delivery = event.params.option_dlo.plus(event.block.number)
     order.contractInitializeBlockNumber = event.block.number
+    let takeEff = event.block.timestamp.toI32() + (order.effectiveHeight.toI32() * help.BLOCK_NUMBER_TIME);
     // order.orderTakeEffectTime = tools.formatDateTimeTS(order.effectiveHeight.toI32() * help.BLOCK_NUMBER_TIME + "",tools.DT_FMT.default);
     // order.orderDeliveryTime = tools.formatDateTimeTS(order.deliveryHeight.toI32() * help.BLOCK_NUMBER_TIME + "",tools.DT_FMT.default);
     if (order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000" && order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000") {
       order.orderStatus = BigInt.fromI32(help.OrderStatus.INITIALIZE)
-      // createMessage(order.orderNum, order.sellerAddr, "订单消息", message.createOrderMessage(event.params.swap.toHex()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "订单消息", message.createOrderMessage(event.params.swap.toHex()));
     } else if (order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000" && !(order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000")) {
       order.orderStatus = BigInt.fromI32(help.OrderStatus.WAIT_BUYER)
-      // createMessage(order.orderNum, order.sellerAddr, "订单消息", message.createOrderMessage(event.params.swap.toHex()));
-      // createMessage(order.orderNum, order.sellerAddr, "保证金消息", message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "订单消息", message.createOrderMessage(event.params.swap.toHex()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "保证金消息", message.sellerEarnestMoneyTime(order.orderNum.toHex(), takeEff.toString()));
     } else if (!(order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000") && order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000") {
       order.orderStatus = BigInt.fromI32(help.OrderStatus.WAIT_SELLER)
-      // createMessage(order.orderNum, order.buyerAddr, "订单消息", message.createOrderMessage(event.params.swap.toHex()));
-      // createMessage(order.orderNum, order.buyerAddr, "保证金消息", message.buyerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
+      createMessage(event.block.number,order.orderNum, order.buyerAddr, "订单消息", message.createOrderMessage(event.params.swap.toHex()));
+      createMessage(event.block.number,order.orderNum, order.buyerAddr, "保证金消息", message.buyerEarnestMoneyTime(order.orderNum.toHex(), takeEff.toString()));
     } else if (!(order.buyerAddr.toHex() == "0x0000000000000000000000000000000000000000") && !(order.sellerAddr.toHex() == "0x0000000000000000000000000000000000000000")) {
       order.orderStatus = BigInt.fromI32(help.OrderStatus.BUYER_SELLER)
-      // createMessage(order.orderNum, order.sellerAddr, "订单消息", message.createOrderMessage(event.params.swap.toHex()));
-      // createMessage(order.orderNum, order.sellerAddr, "保证金消息", message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
-      // createMessage(order.orderNum, order.sellerAddr, "订单消息", message.createOrderMessage(order.orderNum.toHex()));
-      // createMessage(order.orderNum, order.sellerAddr, "保证金消息", message.sellerEarnestMoneyTime(order.orderNum.toHex(), order.orderTakeEffectTime));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "订单消息", message.createOrderMessage(event.params.swap.toHex()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "保证金消息", message.sellerEarnestMoneyTime(order.orderNum.toHex(), takeEff.toString()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "订单消息", message.createOrderMessage(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "保证金消息", message.sellerEarnestMoneyTime(order.orderNum.toHex(), takeEff.toString()));
     }
     order.earnestMoneyStatus = BigInt.fromI32(help.EarnestMoneyStatus.NOT_PAY)
-    // createMessage(order.orderNum, order.contractCreatorAddr, "订单消息", message.createOrderMessage(order.orderNum.toHex()));
+    createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "订单消息", message.createOrderMessage(order.orderNum.toHex()));
     order.save()
   }
 }
@@ -123,17 +127,38 @@ export function handleE_Claim_For_Head(event: E_Claim_For_Head): void {
     log.warning("sellerEarnestMoney:{} sellerMakeUp:{} ", [order.sellerEarnestMoney.toString(), order.sellerMakeUp.toString()])
     order.sellerPaid = order.sellerEarnestMoney
     order.save()
+
+    let lockAll = LockAll.load(order.sellerSubjectMatterAddr.toHex());
+    if (lockAll == null) {
+      lockAll = new LockAll(order.sellerSubjectMatterAddr.toHex());
+      lockAll.number = order.sellerEarnestMoney
+      lockAll.save()
+    } else {
+      lockAll.number = lockAll.number.plus(order.sellerEarnestMoney)
+      lockAll.save()
+    }
+    
+    let lockCurr =LockCurr.load(order.sellerSubjectMatterAddr.toHex());
+    if (lockCurr == null) {
+      lockCurr = new LockCurr(order.sellerSubjectMatterAddr.toHex());
+      lockCurr.number = order.sellerEarnestMoney
+      lockCurr.save()
+    } else {
+      lockCurr.number = lockCurr.number.plus(order.sellerEarnestMoney)
+      lockCurr.save()
+    }
+
     log.warning("sellerEarnestMoney:{} sellerMakeUp:{} ", [order.sellerEarnestMoney.toString(), order.sellerMakeUp.toString()])
-    // createMessage(order.orderNum, order.sellerAddr, "保证金消息", message.buyerEarnestMoney(order.orderNum.toHex(), order.sellerEarnestMoney.toString()));
-    // createMessage(order.orderNum, order.contractCreatorAddr, "保证金消息", message.creatorBuyerEarnestMoney(order.sellerAddr.toHex(), order.orderNum.toHex(), order.sellerEarnestMoney.toString()));
-    // if (order.earnestMoneyStatus == BigInt.fromI32(help.EarnestMoneyStatus.ALL_PAY)) {
-    //   createMessage(order.orderNum, order.contractCreatorAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
-    //   createMessage(order.orderNum, order.buyerAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
-    //   createMessage(order.orderNum, order.sellerAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
-    // } else {
-    //   createMessage(order.orderNum, order.sellerAddr, "保证金消息", message.waitBuyerPayEarnestMoney(order.orderNum.toHex()));
-    //   createMessage(order.orderNum, order.contractCreatorAddr, "保证金消息", message.waitBuyerPayEarnestMoney(order.orderNum.toHex()));
-    // }
+    createMessage(event.block.number,order.orderNum, order.sellerAddr, "保证金消息", message.buyerEarnestMoney(order.orderNum.toHex(), order.sellerEarnestMoney.toString()));
+    createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "保证金消息", message.creatorBuyerEarnestMoney(order.sellerAddr.toHex(), order.orderNum.toHex(), order.sellerEarnestMoney.toString()));
+    if (order.earnestMoneyStatus == BigInt.fromI32(help.EarnestMoneyStatus.ALL_PAY)) {
+      createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.buyerAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
+    } else {
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "保证金消息", message.waitBuyerPayEarnestMoney(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "保证金消息", message.waitBuyerPayEarnestMoney(order.orderNum.toHex()));
+    }
   }
 }
 
@@ -160,82 +185,36 @@ export function handleE_Claim_For_Tail(event: E_Claim_For_Tail): void {
     log.warning("buyerEarnestMoney:{}", [order.buyerEarnestMoney.toString()])
     order.buyerPaid = order.buyerEarnestMoney
     order.save()
-    // createMessage(order.orderNum, order.buyerAddr, "保证金消息", message.buyerEarnestMoney(order.orderNum.toHex(), order.buyerEarnestMoney.toString()));
-    // createMessage(order.orderNum, order.contractCreatorAddr, "保证金消息", message.creatorBuyerEarnestMoney(order.buyerAddr.toHex(), order.orderNum.toHex(), order.buyerEarnestMoney.toString()));
-    // if (order.earnestMoneyStatus == BigInt.fromI32(help.EarnestMoneyStatus.ALL_PAY)) {
-    //   createMessage(order.orderNum, order.contractCreatorAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
-    //   createMessage(order.orderNum, order.buyerAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
-    //   createMessage(order.orderNum, order.sellerAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
-    // } else {
-    //   createMessage(order.orderNum, order.buyerAddr, "保证金消息", message.waitSellerPayEarnestMoney(order.orderNum.toHex()));
-    //   createMessage(order.orderNum, order.contractCreatorAddr, "保证金消息", message.waitSellerPayEarnestMoney(order.orderNum.toHex()));
-    // }
-  }
-}
 
-
-
-
-// // 支付代币（正面） 参数为 交易对合约地址，操作用户，本次抵押数量，总抵押数量
-export function handleE_Deposit_For_Head(event: E_Deposit_For_Head): void {
-  log.warning("DepositForHead orderNum:{}", [event.params.swap.toHex()])
-  let order = Order.load(event.params.swap.toHex())
-  if (order != null) {
-    order.sellerMakeUp = event.params.deposited_amount.toBigDecimal()
-    if (order.sellerDeliveryQuantity.equals(event.params.deposited_amount.toBigDecimal())) {
-      order.depositStatus = BigInt.fromI32(help.DepositStatus.SELLER_MAKE_UP)
-      // createMessage(order.orderNum, order.buyerAddr, "交割消息", message.makeUpToken(order.orderNum.toHex()));
-      // createMessage(order.orderNum, order.contractCreatorAddr, "交割消息", message.buyerMakeUpTokenToCreator(order.buyerAddr.toHex(), order.orderNum.toHex()));
-      // if (order.sellerMakeUp == order.sellerDeliveryQuantity) {
-      //   createMessage(order.orderNum, order.buyerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-      //   createMessage(order.orderNum, order.sellerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-      //   createMessage(order.orderNum, order.contractCreatorAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-      // }
+    let lockAll = LockAll.load(order.buyerSubjectMatterAddr.toHex());
+    if (lockAll == null) {
+      lockAll = new LockAll(order.buyerSubjectMatterAddr.toHex());
+      lockAll.number = order.buyerEarnestMoney
+      lockAll.save()
     } else {
-        // let price = new BigDecimal(order.buyerDeliveryQuantity).minus(new BigDecimal(order.buyerMakeUp));
-        // createMessage(order.orderNum, order.buyerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-        // createMessage(order.orderNum, order.sellerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-        // createMessage(order.orderNum, order.contractCreatorAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
+      lockAll.number = lockAll.number.plus(order.buyerEarnestMoney)
+      lockAll.save()
     }
-    // if (!(order.buyerMakeUp.equals(order.buyerDeliveryQuantity))) {
-      
-    // }
-    // if (order.depositStatus == BigInt.fromI32(help.DepositStatus.BUYER_MAKE_UP && order.sellerMakeUp.equals(order.sellerDeliveryQuantity))) {
-    //   order.depositStatus = BigInt.fromI32(help.DepositStatus.ALL_MAKE_UP)
-    // }
-    order.save()
-  }
-}
 
-// address swap ,address user, uint256 amount,uint256 deposited_amount
-// // 支付代币（反面） 参数为 交易对合约地址，操作用户，本次抵押数量，总抵押数量
-export function handleE_Deposit_For_Tail(event: E_Deposit_For_Tail): void {
-  log.warning("DepositForTail orderNum:{}", [event.params.swap.toHex()])
-  let order = Order.load(event.params.swap.toHex())
-  if (order != null) {
-    order.buyerMakeUp = event.params.deposited_amount.toBigDecimal()
-    if (order.buyerDeliveryQuantity.equals(event.params.deposited_amount.toBigDecimal())) {
-      order.depositStatus = BigInt.fromI32(help.DepositStatus.BUYER_MAKE_UP)
-      // createMessage(order.orderNum, order.buyerAddr, "交割消息", message.makeUpToken(order.orderNum.toHex()));
-      // createMessage(order.orderNum, order.contractCreatorAddr, "交割消息", message.buyerMakeUpTokenToCreator(order.buyerAddr.toHex(), order.orderNum.toHex()));
-      // if (order.sellerMakeUp == order.sellerDeliveryQuantity) {
-      //   createMessage(order.orderNum, order.buyerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-      //   createMessage(order.orderNum, order.sellerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-      //   createMessage(order.orderNum, order.contractCreatorAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-      // }
+    let lockCurr = LockCurr.load(order.buyerSubjectMatterAddr.toHex());
+    if (lockCurr == null) {
+      lockCurr = new LockCurr(order.buyerSubjectMatterAddr.toHex());
+      lockCurr.number = order.buyerEarnestMoney
+      lockCurr.save()
     } else {
-        // let price = new BigDecimal(order.buyerDeliveryQuantity).minus(new BigDecimal(order.buyerMakeUp));
-        // createMessage(order.orderNum, order.buyerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-        // createMessage(order.orderNum, order.sellerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
-        // createMessage(order.orderNum, order.contractCreatorAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
+      lockCurr.number = lockCurr.number.plus(order.buyerEarnestMoney)
+      lockCurr.save()
     }
-    // if (!(order.sellerMakeUp.equals(order.sellerDeliveryQuantity))) {
-      
-    // }
-    // if (order.depositStatus == BigInt.fromI32(help.DepositStatus.SELLER_MAKE_UP) && order.buyerMakeUp.equals(order.buyerDeliveryQuantity)) {
-    //   order.depositStatus = BigInt.fromI32(help.DepositStatus.ALL_MAKE_UP)
-    // }
-    order.save()
+    createMessage(event.block.number,order.orderNum, order.buyerAddr, "保证金消息", message.buyerEarnestMoney(order.orderNum.toHex(), order.buyerEarnestMoney.toString()));
+    createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "保证金消息", message.creatorBuyerEarnestMoney(order.buyerAddr.toHex(), order.orderNum.toHex(), order.buyerEarnestMoney.toString()));
+    if (order.earnestMoneyStatus == BigInt.fromI32(help.EarnestMoneyStatus.ALL_PAY)) {
+      createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.buyerAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "保证金消息", message.allPayEarnestMoney(order.orderNum.toHex()));
+    } else {
+      createMessage(event.block.number,order.orderNum, order.buyerAddr, "保证金消息", message.waitSellerPayEarnestMoney(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "保证金消息", message.waitSellerPayEarnestMoney(order.orderNum.toHex()));
+    }
   }
 }
 
@@ -252,29 +231,163 @@ export function handleE_Entanglement(event: E_Entanglement): void {
   }
 }
 
+// // 支付代币（正面） 参数为 交易对合约地址，操作用户，本次抵押数量，总抵押数量
+export function handleE_Deposit_For_Head(event: E_Deposit_For_Head): void {
+  log.warning("DepositForHead orderNum:{}", [event.params.swap.toHex()])
+  let order = Order.load(event.params.swap.toHex())
+  if (order != null) {
+    order.sellerMakeUp = event.params.deposited_amount.toBigDecimal()
+    if (order.sellerDeliveryQuantity.equals(event.params.deposited_amount.toBigDecimal())) {
+      order.depositStatus = BigInt.fromI32(help.DepositStatus.SELLER_MAKE_UP)
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "交割消息", message.makeUpToken(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "交割消息", message.buyerMakeUpTokenToCreator(order.sellerAddr.toHex(), order.orderNum.toHex()));
+      if (order.sellerMakeUp == order.buyerDeliveryQuantity) {
+        createMessage(event.block.number,order.orderNum, order.buyerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
+        createMessage(event.block.number,order.orderNum, order.sellerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
+        createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
+      }
+    } else {
+        let price = order.sellerDeliveryQuantity.minus(order.sellerMakeUp);
+        createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "交割消息", message.waitBuyerMakeUpToken(order.orderNum.toHex(), price.toString()));
+        createMessage(event.block.number,order.orderNum, order.buyerAddr, "交割消息", message.waitBuyerMakeUpToken(order.orderNum.toHex(), price.toString()));
+        createMessage(event.block.number,order.orderNum, order.sellerAddr, "交割消息", message.makeUpToken3(order.orderNum.toHex(), order.sellerMakeUp.toString(), price.toString()));
+    }
+    if (!(order.sellerMakeUp.equals(order.sellerDeliveryQuantity))) {
+      let price = order.buyerDeliveryQuantity.minus(order.buyerMakeUp);
+      createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "交割消息", message.waitSellerMakeUpToken(order.orderNum.toHex(), price.toString()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "交割消息", message.waitSellerMakeUpToken(order.orderNum.toHex(), price.toString()));
+      createMessage(event.block.number,order.orderNum, order.buyerAddr, "交割消息", message.makeUpToken3(order.orderNum.toHex(), order.buyerMakeUp.toString(), price.toString()));
+    }
+    if (order.depositStatus == BigInt.fromI32(help.DepositStatus.BUYER_MAKE_UP) && order.sellerMakeUp.equals(order.sellerDeliveryQuantity)) {
+      order.depositStatus = BigInt.fromI32(help.DepositStatus.ALL_MAKE_UP)
+    }
+    order.save()
+    let lockAll = LockAll.load(order.sellerSubjectMatterAddr.toHex());
+    lockAll.number = lockAll.number.plus(event.params.amount.toBigDecimal())
+
+    let lockCurr = LockCurr.load(order.sellerSubjectMatterAddr.toHex());
+    lockCurr.number = lockCurr.number.plus(event.params.amount.toBigDecimal())
+    lockCurr.save()
+  }
+}
+
+// address swap ,address user, uint256 amount,uint256 deposited_amount
+// // 支付代币（反面） 参数为 交易对合约地址，操作用户，本次抵押数量，总抵押数量
+export function handleE_Deposit_For_Tail(event: E_Deposit_For_Tail): void {
+  log.warning("DepositForTail orderNum:{}", [event.params.swap.toHex()])
+  let order = Order.load(event.params.swap.toHex())
+  if (order != null) {
+    order.buyerMakeUp = event.params.deposited_amount.toBigDecimal()
+    if (order.buyerDeliveryQuantity.equals(event.params.deposited_amount.toBigDecimal())) {
+      order.depositStatus = BigInt.fromI32(help.DepositStatus.BUYER_MAKE_UP)
+      createMessage(event.block.number, order.orderNum, order.buyerAddr, "交割消息", message.makeUpToken(order.orderNum.toHex()));
+      createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "交割消息", message.buyerMakeUpTokenToCreator(order.buyerAddr.toHex(), order.orderNum.toHex()));
+      if (order.sellerMakeUp == order.sellerDeliveryQuantity) {
+        createMessage(event.block.number,order.orderNum, order.buyerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
+        createMessage(event.block.number,order.orderNum, order.sellerAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
+        createMessage(event.block.number, order.orderNum, order.contractCreatorAddr, "交割消息", message.allMakeUpToken(order.orderNum.toHex()));
+      }
+    } else {
+        let price = order.buyerDeliveryQuantity.minus(order.buyerMakeUp);
+        createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "交割消息", message.waitBuyerMakeUpToken(order.orderNum.toHex(), price.toString()));
+        createMessage(event.block.number,order.orderNum, order.sellerAddr, "交割消息", message.waitBuyerMakeUpToken(order.orderNum.toHex(), price.toString()));
+        createMessage(event.block.number,order.orderNum, order.buyerAddr, "交割消息", message.makeUpToken3(order.orderNum.toHex(), order.buyerMakeUp.toString(), price.toString()));
+    }
+    if (!(order.sellerMakeUp.equals(order.sellerDeliveryQuantity))) {
+      let price = order.sellerDeliveryQuantity.minus(order.sellerMakeUp);
+      createMessage(event.block.number,order.orderNum, order.contractCreatorAddr, "交割消息", message.waitSellerMakeUpToken(order.orderNum.toHex(), price.toString()));
+      createMessage(event.block.number,order.orderNum, order.buyerAddr, "交割消息", message.waitSellerMakeUpToken(order.orderNum.toHex(), price.toString()));
+      createMessage(event.block.number,order.orderNum, order.sellerAddr, "交割消息", message.makeUpToken3(order.orderNum.toHex(), order.sellerMakeUp.toString(), price.toString()));
+    }
+    if (order.depositStatus == BigInt.fromI32(help.DepositStatus.SELLER_MAKE_UP) && order.buyerMakeUp.equals(order.buyerDeliveryQuantity)) {
+      order.depositStatus = BigInt.fromI32(help.DepositStatus.ALL_MAKE_UP)
+    }
+    order.save()
+
+    let lockAll = LockAll.load(order.buyerSubjectMatterAddr.toHex());
+    lockAll.number = lockAll.number.plus(event.params.amount.toBigDecimal())
+    lockAll.save()
+    let lockCurr = LockCurr.load(order.buyerSubjectMatterAddr.toHex());
+    lockCurr.number = lockCurr.number.plus(event.params.amount.toBigDecimal())
+    lockCurr.save()
+  }
+}
 
 
 
 // // 领取应得代币（正面） 参数为 交易对合约地址，操作用户 ，状态 （1：未成对。2：已履行完成合约。3：自己履行而对手未履行。4 自己未履行)
 export function handleE_Withdraw_Head(event: E_Withdraw_Head): void {
+  log.warning("E_Withdraw_Head orderNum:{}", [event.params.swap.toHex()])
+  let order = Order.load(event.params.swap.toHex())
+  if (order != null) {
+    order.sellerWithdrawStatus = event.params.status
+    if (order.orderStatus == BigInt.fromI32(help.OrderStatus.BUYER_RECEIVE)) {
+      order.orderStatus = BigInt.fromI32(help.OrderStatus.OVER)
+    } else {
+      order.orderStatus = BigInt.fromI32(help.OrderStatus.SELLER_RECEIVE)
+    }
+    order.save()
 
+    let lockCurr = LockCurr.load(order.sellerSubjectMatterAddr.toHex());
+    // 1 各领各的 2 各领各的 3 自己领 4 别人领
+    if (event.params.status == BigInt.fromI32(1) || event.params.status == BigInt.fromI32(2)) {
+      lockCurr.number = lockCurr.number.minus(order.sellerMakeUp)
+    } else if (event.params.status == BigInt.fromI32(3)){
+      lockCurr.number = lockCurr.number.minus(order.sellerMakeUp)
+      let lock = LockCurr.load(order.buyerSubjectMatterAddr.toHex());
+      if (lock != null) {
+        lock.number = lock.number.minus(order.buyerEarnestMoney)
+      }
+      lock.save()
+    } else if (event.params.status == BigInt.fromI32(4)){
+      lockCurr.number = lockCurr.number.minus(order.sellerMakeUp.minus(order.sellerEarnestMoney))
+    }
+    lockCurr.save()
+    
+  }
 }
 
 // // 领取应得代币（反面） 参数为 交易对合约地址，操作用户 ，状态 1：未成对。2：已履行完成合约。3：自己履行而对手未履行。4 自己未履行）
 export function handleE_Withdraw_Tail(event: E_Withdraw_Tail): void {
-
+  log.warning("E_Withdraw_Tail orderNum:{}", [event.params.swap.toHex()])
+  let order = Order.load(event.params.swap.toHex())
+  if (order != null) {
+    order.sellerWithdrawStatus = event.params.status
+    if (order.orderStatus == BigInt.fromI32(help.OrderStatus.SELLER_RECEIVE)) {
+      order.orderStatus = BigInt.fromI32(help.OrderStatus.OVER)
+    } else {
+      order.orderStatus = BigInt.fromI32(help.OrderStatus.BUYER_RECEIVE)
+    }
+    order.save()
+    let lockCurr = LockCurr.load(order.buyerSubjectMatterAddr.toHex());
+    // 1 各领各的 2 各领各的 3 自己领 4 别人领
+    if (event.params.status == BigInt.fromI32(1) || event.params.status == BigInt.fromI32(2)) {
+      lockCurr.number = lockCurr.number.minus(order.buyerMakeUp)
+    } else if (event.params.status == BigInt.fromI32(3)){
+      lockCurr.number = lockCurr.number.minus(order.buyerMakeUp)
+      let lock = LockCurr.load(order.sellerSubjectMatterAddr.toHex());
+      if (lock != null) {
+        lock.number = lock.number.minus(order.sellerEarnestMoney)
+      }
+      lock.save()
+    } else if (event.params.status == BigInt.fromI32(4)){
+      lockCurr.number = lockCurr.number.minus(order.buyerMakeUp.minus(order.buyerEarnestMoney))
+    }
+    lockCurr.save()
+  }
 }
 
 export function handleOwnershipTransferred(event: OwnershipTransferred): void {
 }
 
 
-export function createMessage(orderNum: Bytes | null, userAddr: Bytes | null, messageTypeName: string, messageContext: string): void {
+export function createMessage(blockNumber: BigInt,orderNum: Bytes | null, userAddr: Bytes | null, messageTypeName: string, messageContext: string): void {
   log.warning("message:{}", ["msg"])
   let message = new Message(orderNum.toHex() + messageTypeName)
   message.orderNum = orderNum
   message.userAddr = userAddr
   message.messageTypeName = messageTypeName.toString()
   message.messageContext = messageContext.toString()
+  message.blockNumber = blockNumber
   message.save()
 }

@@ -36,11 +36,11 @@ export function waitBuyerPayEarnestMoney(orderNum: string): string {
 }
 
 export function buyerEarnestMoneyTime(orderNum: string, time: String): string {
-    return "买家加入订单后，提示买家：“你已加入订单（" + orderNum + "），请在  时间（" + time + "）内支付保证金";
+    return "买家加入订单后，提示买家：“你已加入订单（" + orderNum + "），请在  时间（${" + time + "}）内支付保证金";
 }
 
 export function sellerEarnestMoneyTime(orderNum: string, time: String): string {
-    return "卖家加入订单后，提示卖家：“你已加入订单（" + orderNum + "），请在  时间（" + time + "）内支付保证金";
+    return "卖家加入订单后，提示卖家：“你已加入订单（" + orderNum + "），请在  时间（${" + time + "}）内支付保证金";
 }
 
 export function makeUpToken(orderNum: string): string {
@@ -68,11 +68,11 @@ export function makeUpToken3(orderNum: string, currentPrice: string, remainPrice
 }
 
 export function noPayEarnestMoneyOrderInvalidation(orderNum: string, time: string): string {
-    return "你加入的订单（" + orderNum + "）未在  时间（" + time + "）内支付保证金，订单已失效";
+    return "你加入的订单（" + orderNum + "）未在  时间（${" + time + "}）内支付保证金，订单已失效";
 }
 
 export function noMakeUpTokenInvalidation(orderNum: string, time: string): string {
-    return "你加入的订单（" + orderNum + "）未在  时间（" + time + "）内补足代币，已违约";
+    return "你加入的订单（" + orderNum + "）未在  时间（${" + time + "}）内补足代币，已违约";
 }
 
 
