@@ -5,25 +5,20 @@ export let ZERO_BI = BigInt.fromI32(0)
 export let ONE_BI = BigInt.fromI32(1)
 export let ZERO_BD = BigDecimal.fromString('0')
 export let ONE_BD = BigDecimal.fromString('1')
+export let EIGHTEEN_BD = BigDecimal.fromString('1000000000000000000')
 export let BI_18 = BigInt.fromI32(18)
 export let BLOCK_NUMBER_TIME = 13;
 export enum OrderStatus {
     WAIT_INITIALIZE = 0,
     INITIALIZE,
-    WAIT_BUYER,
-    WAIT_SELLER,
-    BUYER_SELLER,
-    BUYER_RECEIVE,
-    SELLER_RECEIVE,
-    OVER
-    // WAIT_INITIALIZE(0, "等待初始化"),
-    // INITIALIZE(1, "初始化"),
-    // WAIT_BUYER(2, "等待买家"),
-    // WAIT_SELLER(3, "等待卖家"),
-    // BUYER_SELLER(4, "买卖家都确定"),
-    // BUYER_RECEIVE(5, "买方领取"),
-    // SELLER_RECEIVE(6, "卖方领取"),
-    // OVER(7, "交割完成");
+    CREATE_PAY,
+    OVER,
+    XXXX
+    // WAIT_INITIALIZE 0 等待初始化
+    // INITIALIZE 1 初始化
+    // CREATE_PAY 2 卖方支付代币
+    // OVER 3 订单关闭
+    // XXXX 4 交割订单关闭
 }
 
 export enum MessageType {

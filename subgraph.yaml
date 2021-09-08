@@ -4,60 +4,47 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Contract
-    network: ropsten
-#     mainnet
-# kovan
-# rinkeby
-# ropsten
-# goerli
-# poa-core
-# xdai
-# poa-sokol
-# matic
-# mumbai
-# fantom
-# bsc
+    network: mainnet
     source:
-      address: "0xceF7d74783A38d3917B7D74cF037acC1EA9E336B"
+      address: "0x9E83068F0Be312448567E6430d3bE9E60550D083"
       abi: Contract
-      startBlock: 9894204
+      startBlock: 12155341
+      # startBlock: 18155864
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
+        - E_Claim_For_Delivery
         - E_Claim_For_Head
-        - E_Claim_For_Tail
         - E_Create
-        - E_Deposit_For_Head
         - E_Deposit_For_Tail
-        - E_Entanglement
         - E_Initialize
+        - E_Permit_User
+        - E_Token_Price
         - E_Withdraw_Head
-        - E_Withdraw_Tail
-        - OwnershipTransferred
+        - E_Token_Info
       abis:
         - name: Contract
           file: ./abis/Contract.json
       eventHandlers:
-        - event: E_Claim_For_Head(address,address,address)
+      # 新增
+        - event: E_Claim_For_Delivery(address,address)
+          handler: handleE_Claim_For_Delivery
+        - event: E_Claim_For_Head(address,address)
           handler: handleE_Claim_For_Head
-        - event: E_Claim_For_Tail(address,address,address)
-          handler: handleE_Claim_For_Tail
-        - event: E_Create(address,address,address,address,address,uint256)
+        - event: E_Create(address,indexed address,indexed address,address,address,indexed address,uint256)
           handler: handleE_Create
-        - event: E_Deposit_For_Head(address,address,uint256,uint256)
-          handler: handleE_Deposit_For_Head
-        - event: E_Deposit_For_Tail(address,address,uint256,uint256)
+        - event: E_Deposit_For_Tail(address,address,uint256,uint256,address,uint256,uint256)
           handler: handleE_Deposit_For_Tail
-        - event: E_Entanglement(address,address,address,address)
-          handler: handleE_Entanglement
-        - event: E_Initialize(address,address,uint256,uint256,uint256,uint256,address,address,uint256,uint256)
+        - event: E_Initialize(address,address,uint256,uint256,uint256,string)
           handler: handleE_Initialize
+        - event: E_Permit_User(address,address,address)
+          handler: handleE_Permit_User
+        - event: E_Token_Price(address,address,uint256)
+          handler: handleE_Token_Price
         - event: E_Withdraw_Head(address,address,uint256)
           handler: handleE_Withdraw_Head
-        - event: E_Withdraw_Tail(address,address,uint256)
-          handler: handleE_Withdraw_Tail
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
+        - event: E_Token_Info(address,address,address,uint256,uint256,address,uint256,uint256,address,uint256,uint256)
+          handler: handleE_Token_Info
       file: ./src/mapping.ts

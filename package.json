@@ -1,16 +1,16 @@
 {
-  "name": "ss",
+  "name": "bsc-arche-test",
   "license": "UNLICENSED",
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wyn77/ss",
-    "create-local": "graph create --node http://localhost:8020/ wyn77/ss",
-    "remove-local": "graph remove --node http://localhost:8020/ wyn77/ss",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wyn77/ss"
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ wyn77/bsc-arche-test",
+    "create-local": "graph create --node http://localhost:8020/ wyn77/bsc-arche-test",
+    "remove-local": "graph remove --node http://localhost:8020/ wyn77/bsc-arche-test",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 bsc-arche-test"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.20.0",
+    "@graphprotocol/graph-cli": "0.21.0",
     "@graphprotocol/graph-ts": "0.20.0"
   }
 }

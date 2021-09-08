@@ -10,123 +10,135 @@
 # event E_Withdraw_Head(address swap ,address user ,uBigInt256 status);
 # event E_Withdraw_Tail(address swap ,address user ,uBigInt256 status);
   
+type ChildOrder @entity {
+  id: ID!
+  "用户地址(买家)"
+  userAddr: Bytes
+  "合约创建人地址(卖家)"
+  contractCreatorAddr: Bytes
+  "买家标的物地址"
+  buyerSubjectMatterAddr: Bytes!
+  "卖家标的物地址"
+  sellerSubjectMatterAddr: Bytes!
+  "购买数量"
+  buyCount: BigDecimal
+  "购买卖家几许"
+  sellCount: BigDecimal
+  "交易hash"
+  transactionHash: String
+  "汇率（卖方/买方）"
+  parities: BigDecimal!
+  "MyOrder汇率（买方/卖方）"
+  myCreateParities: BigDecimal!
+  "撮合人"
+  refererAddr: Bytes
+  "撮合人奖励金额"
+  refererCount: BigDecimal
+  "赏金ERC合约地址"
+  sysRewardAddr: Bytes
+  "关联订单编号"
+  orderNum: String
+  "区块高度"
+  blockNumber: BigInt
+  "买方已领取数量"
+  buyerReceiver: BigDecimal!
+  "买方待领取数量"
+  buyerUnReceiver: BigDecimal!
+  "卖方已领取数量"
+  sellerReceiver: BigDecimal!
+  "卖方待领取数量"
+  sellerUnReceiver: BigDecimal!
+  "合约初始化区块高度"
+  contractInitializeBlockNumber: BigInt
+  "合约初始化区块高度 + 期货交割区块偏移量"
+  deliveryBlokcNumber: BigInt!
+  "期货交割区块偏移量"
+  futureBlockOffset: BigInt!
+  sellDecimal: BigInt
+  sellName: String
+  buyDecimal: BigInt
+  buyName: String
+  rewardDecimal: BigInt
+  rewardName: String
+}  
 type Order @entity {
   id: ID!
   "订单编号"
-  orderNum: Bytes
-  "订单状态 0 等待初始化 1 初始化 2 等待买家  3 等待卖家 4 买卖家都确定 5 买方领取 6 卖方领取 7 交割完成"
+  orderNum: String
+  "订单状态 0 等待初始化 1 初始化 2 卖方支付代币 3 订单关闭"
   orderStatus: BigInt
   "买方交割数量"
   buyerDeliveryQuantity: BigDecimal!
   "卖方交割数量"
   sellerDeliveryQuantity: BigDecimal!
-  "订单生效时间"
-  orderTakeEffectTime: String
-  "订单交割时间"
-  orderDeliveryTime: String
-  "距离合约生效区块高度数量"
-  effectiveHeight: BigInt
-  effective: BigInt
-  "距离交割区块高度数量"
-  deliveryHeight: BigInt
-  delivery: BigInt
-  "买方保证金"
-  buyerEarnestMoney: BigDecimal!
-  "卖方保证金"
-  sellerEarnestMoney: BigDecimal!
-  "买家已付"
-  buyerPaid: BigDecimal
-  "卖家已付"
-  sellerPaid: BigDecimal
-  "买家地址"
-  buyerAddr: Bytes
-  "卖家地址"
-  sellerAddr: Bytes
-  "买家权益代币地址"
-  buyerTokenAddr: Bytes
-  "卖家权益代币地址"
-  sellerTokenAddr: Bytes
-  "买家权益代币总数量（权益凭证"
-  buyerTokenTotalQuantity: BigDecimal
-  "卖家权益代币总数量（权益凭证"
-  sellerTokenTotalQuantity: BigDecimal
-  "合约创建人地址"
-  contractCreatorAddr: Bytes
-  "合约创建时间"
-  contractCreateTime: BigInt
-  "成单赏金"
-  moneyReward: BigDecimal
-  "买家已补足"
-  buyerMakeUp: BigDecimal!
-  "卖家已补足"
-  sellerMakeUp: BigDecimal!
-  "合约创建区块高度"
-  contractCreateBlockNumber: BigInt
-  "合约初始化时间"
-  contractInitializeTime: BigInt
-  "合约初始化区块高度"
-  contractInitializeBlockNumber: BigInt
   "买家标的物地址"
   buyerSubjectMatterAddr: Bytes!
   "卖家标的物地址"
   sellerSubjectMatterAddr: Bytes!
-  "保证金状态 0 双方未支付 1 买方支付 2 卖方支付 3 双方支付"
-  earnestMoneyStatus: BigInt
-  "补足代币状态 0 双方未补 1 买方补足 2 卖方补足 3 双方补足"
-  depositStatus: BigInt
-  "买家领取状态 1 未成对 2 已履行完成合约 3 自己履行而对手未履行 4 自己未履行"
-  buyerWithdrawStatus: BigInt
-  "卖家领取状态 1 未成对 2 已履行完成合约 3 自己履行而对手未履行 4 自己未履行"
-  sellerWithdrawStatus: BigInt
-  "订单约定状态 0 正常 1 保险金违约 2 代币违约"
-  contractStatus: BigInt
-  "买方邀请人"
-  buyerReferer: Bytes
-  "卖方邀请人"
-  sellerReferer: Bytes
-  chainType: BigInt
+  "卖方卖出数量"
+  sellerCount: BigDecimal!
+  "卖方剩余数量"
+  sellerResidueCount: BigDecimal
+  "买方进入数量"
+  buyerCount: BigDecimal!
+  "买方剩余数量"
+  buyerResidueCount: BigDecimal
+  "汇率（卖方/买方）"
+  parities: BigDecimal!
+  "MyOrder汇率（买方/卖方）"
+  myCreateParities: BigDecimal!
+  "前端渲染汇率"
+  paritiesForWeb: BigDecimal
+  "比例"
+  ratio: BigDecimal
+  "合约创建人地址"
+  contractCreatorAddr: Bytes
+  "合约创建时间"
+  contractCreateTime: BigInt
+  "合约创建区块高度"
+  contractCreateBlockNumber: BigInt 
+  "合约初始化时间"
+  contractInitializeTime: BigInt
+  "合约初始化区块高度"
+  contractInitializeBlockNumber: BigInt
+  "赏金ERC合约地址"
+  sysRewardAddr: Bytes
+  "赏金数量"
+  sysReward: BigDecimal!
+  "剩余赏金"
+  residueSysReward: BigDecimal
+  "白名单地址"
+  whiteAddr: String
+  "标语"
+  slogan: String
+  "期货交割区块偏移量"
+  futureBlockOffset: BigInt!
+  "合约初始化区块高度 + 期货交割区块偏移量"
+  deliveryBlokcNumber: BigInt!
+  "买方待领取数量"
+  buyerUnReceiver: BigDecimal!
+  "卖方待领取数量"
+  sellerUnReceiver: BigDecimal!
+  "交易记录id列表"
+  childOrders: [String]!
+  "交易记录买方pk列表"
+  childOrderPks: [String]!
+  sellDecimal: BigInt
+  sellName: String
+  buyDecimal: BigInt
+  buyName: String
+  rewardDecimal: BigInt
+  rewardName: String
 }
 
-type Message @entity {
+type ClaimRecord @entity {
   id: ID!
-  "消息内容"
-  messageContext: String
-  "消息类型id"
-  messageTypeId: BigInt
-  "消息类型名称"
-  messageTypeName: String
-  "用户地址"
+  "用户地址(领取人))"
   userAddr: Bytes
   "关联订单编号"
-  orderNum: Bytes
+  orderNum: String
   "区块高度"
   blockNumber: BigInt
 }
 
-type RecommendOrder @entity {
-  id: ID!
-  "卖方代币"
-  sellerToken: Bytes!
-  "买方代币地址"
-  sellerTokenAddr: Bytes!
-  "等待交割数量"
-  waitDeliveryNum: BigInt!
-  "等待生效数量"
-  waitEffectNum: BigInt!
-  "总数量"
-  totalNum: BigInt!
-} 
 
-type LockAll @entity {
-  "币地址"
-  id:ID!
-  "币数量"
-  number: BigDecimal!
-}
-
-type LockCurr @entity {
-  "币地址"
-  id:ID!
-  "币数量"
-  number: BigDecimal!
-}
